@@ -36,9 +36,11 @@ read.ODtable <- function(sss) {
 	
 	stopifnot(length(sss) == 10)
 	stopifnot(s[[1]][1] == "Plate:")
-	plate.name <- s[[1]][2]
 	m <- do.call(rbind, lapply(s[3:10], function(x) if(length(x) == 13) as.numeric(x[2:13]) else as.numeric(x)))
-	attr(m, "name") <- plate.name
+
+	attr(m, "name")  <- s[[1]][2]                 # Plate name
+	attr(m, "wavel") <- as.numeric(s[[1]][11])    # Wave length (from the metadata)
+	attr(m, "temp")  <- as.numeric(s[[3]][1])     # Real temperature
 	m
 }
 
@@ -76,23 +78,34 @@ ODdata.table <- function(ODfile, genfile) {
 			nm <- attr(oo, "name")
 			nm <- unlist(strsplit(nm, split="_+"))
 			nm1 <- unlist(strsplit(nm[1], ""))
-			replicate <- if (length(nm) == 2) 1 else as.numeric(nm[3])
-			food      <- paste0(nm1[is.letter(nm1)], collapse="")
-			temp      <- paste0(nm1[is.number(nm1)], collapse="")
-			wavel     <- as.numeric(nm[2])
+			food      <- paste0(nm1[is.letter(nm1)], collapse="") # From the plate name
+			temp      <- paste0(nm1[is.number(nm1)], collapse="") # From the plate name
+			replicate <- paste0(attr(od, "file"), "_", LETTERS[which(attr(oo, "name") %in% names(od))])
+			# if (abs(as.numeric(temp) -attr(oo, "temp")) > 1) 
+			#  	warning("Replicate", nm, ", Temperature mismatch (", temp, " vs ", attr(oo, "temp"))
 			data.frame(
 				Food       = rep(food, length(oo)),
 				Temp       = rep(temp, length(oo)),
-				Wavelength = rep(wavel, length(oo)),
+				Wavelength = rep(attr(oo, "wavel"), length(oo)),
 				Genotype   = c(gen),
 				BioReplicate= as.character(1+duplicated(c(gen))),
 				TechReplicate=rep(replicate, length(oo)),
-				DataFile    = rep(attr(od, "file"), length(oo)),
-				Date        = rep(attr(od, "date"), length(oo)),
-				Time        = rep(attr(od, "time"), length(oo)),
-				OD          = c(oo),
-				row.names   = NULL
+				DataFile   = rep(attr(od, "file"), length(oo)),
+				Date       = rep(attr(od, "date"), length(oo)),
+				Time       = rep(attr(od, "time"), length(oo)),
+				OD         = c(oo)
 			)
 		}), list(make.row.names=FALSE)))
+	# Probably unnecessary if we are going to save the file
+	ans$Food <- factor(ans$Food)
+	ans$Temp <- factor(ans$Temp)
+	ans$Wavelength <- factor(ans$Wavelength)
+	ans$Genotype <- factor(ans$Genotype)
+	ans$BioReplicate <- factor(ans$BioReplicate)
+	ans$TechReplicate <- factor(ans$TechReplicate)
+	ans$DataFile <- factor(ans$DataFile)
+	ans$Date <- as.Date(ans$Date,  format="%d/%m/%Y")
+	ans$Time  <- strptime(paste(ans$Date, ans$Time), format="%Y-%m-%d %H:%M:%S", tz="CET")
+	
 	ans
 }
