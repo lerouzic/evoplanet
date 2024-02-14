@@ -80,7 +80,7 @@ ODdata.table <- function(ODfile, genfile) {
 			nm1 <- unlist(strsplit(nm[1], ""))
 			food      <- paste0(nm1[is.letter(nm1)], collapse="") # From the plate name
 			temp      <- paste0(nm1[is.number(nm1)], collapse="") # From the plate name
-			replicate <- paste0(attr(od, "file"), "_", LETTERS[which(attr(oo, "name") %in% names(od))])
+			replicate <- paste0(attr(od, "file"), "_", c(letters,LETTERS)[which(names(od) %in% attr(oo, "name"))])
 			# if (abs(as.numeric(temp) -attr(oo, "temp")) > 1) 
 			#  	warning("Replicate", nm, ", Temperature mismatch (", temp, " vs ", attr(oo, "temp"))
 			data.frame(
