@@ -1,6 +1,10 @@
 
-logistic.regression <- function(time, OD) {
-    time <- time - min(time)
+logistic.regression <- function(time, OD, units="hours") {
+    if (is.character(time))
+        time <- as.POSIXct(time)
+    if ("POSIXct" %in% class(time)) {
+        time <- as.numeric(difftime(time, min(time), units=units))
+    } 
      # Starting values
      logit <- function(x) log(x/(1-x))
      start <- list(
